@@ -79,3 +79,53 @@ import itertools
 import numpy as np
 import pandas as pd
 
+def recommend_diet_plan(protein_target, fat_target, carbs_target, data, top_n=3):
+    # Extract relevant columns
+    food_items = data[['Food_name', 'Protein(g)', 'Total lipid (fat)(g)', 'Carbohydrate, by difference(g)']].dropna()
+
+    # Rename columns for ease
+    food_items.columns = ["food_name", "protein", "fat", "carbs"]
+
+    # Convert to numpy array for faster computation
+    food_array = food_items[["protein", "fat", "carbs"]].values
+    food_names = food_items["food_name"].values
+
+    best_combinations = []
+
+    for _ in range(top_n):  # Generate multiple different meal plans
+        selected_indices = []
+        current_protein, current_fat, current_carbs = 0, 0, 0
+        meal_plan = []
+
+        while (current_protein < protein_target or current_fat < fat_target or current_carbs < carbs_target) and len(meal_plan) < 5:
+            idx = random.randint(0, len(food_array) - 1)
+
+            # Prevent selecting the same food repeatedly
+            if idx in selected_indices:
+                continue
+
+            selected_indices.append(idx)
+            meal_plan.append({
+                "food_name": food_names[idx],
+                "protein": food_array[idx][0],
+                "fat": food_array[idx][1],
+                "carbs": food_array[idx][2]
+            })
+
+            # Update macro totals
+            current_protein += food_array[idx][0]
+            current_fat += food_array[idx][1]
+            current_carbs += food_array[idx][2]
+
+            # Stop if we reach the macro targets or 5 items
+            if (current_protein >= protein_target and current_fat >= fat_target and current_carbs >= carbs_target) or len(meal_plan) == 5:
+                best_combinations.append({
+                    "meals": meal_plan,
+                    "total_protein": current_protein,
+                    "total_fat": current_fat,
+                    "total_carbs": current_carbs,
+                    "recommendation": "Balanced meal based on your macro needs!"
+                })
+                break  # Move to the next diet plan
+
+    return best_combinations
