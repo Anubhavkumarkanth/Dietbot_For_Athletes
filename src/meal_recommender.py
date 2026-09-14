@@ -2,12 +2,14 @@
 NearestNeighbors model.
 
 For each meal plan, it repeatedly asks the model for foods close to
-whatever macros are still missing, adds one, and subtracts it from the
-remaining target - a simple greedy fill rather than an exhaustive search,
-which is fine here since we only need a handful of reasonable plans, not
-a perfectly optimal one.
+whatever macros are still missing, adds one at random from those
+neighbours, and subtracts it from the remaining target - a simple greedy
+fill rather than an exhaustive search, which is fine here since we only
+need a handful of reasonable plans, not a perfectly optimal one. The
+random pick is what keeps the plans in a batch from coming out identical.
 """
 
+import random
 from pathlib import Path
 
 import joblib
@@ -80,9 +82,10 @@ class MealRecommender:
             ]]
             _, indices = self._nn_model.kneighbors(query, n_neighbors=neighbor_count)
 
-            candidate = next((idx for idx in indices[0] if idx not in used_indices), None)
-            if candidate is None:
+            candidates = [idx for idx in indices[0] if idx not in used_indices]
+            if not candidates:
                 break
+            candidate = random.choice(candidates)
 
             used_indices.add(candidate)
             food = self._foods.iloc[candidate]
