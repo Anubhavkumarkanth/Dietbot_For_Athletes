@@ -1,17 +1,10 @@
-"""Predicts typical daily calorie intake from body measurements.
+"""Loads the calorie model trained by scripts/train_models.py.
 
-Wraps the Random Forest trained by scripts/train_models.py on NHANES 2017-2018.
+Descriptive, not prescriptive: it estimates what people with a similar build
+actually eat, which is not the same as what someone should eat. The app plans
+meals from the Mifflin-St Jeor target and shows this beside it.
 
-This is descriptive, not prescriptive: it answers "how much do people with this
-age, sex and build actually eat", learned from measured dietary recalls. It is
-not a recommendation. calculations.calculate_daily_calorie_target stays the
-number the app plans meals against; this sits beside it as context.
-
-It ships because it beat the Mifflin-St Jeor formula on held-out data
-(MAE 632.9 vs 650.6 kcal). That margin is small and R2 is only 0.130 — a single
-24-hour recall is a noisy measure of habitual intake, so most of the variance is
-not predictable from body measurements by any model. Exact figures are written
-to models/model_metrics.json at training time.
+Metrics are in models/model_metrics.json.
 """
 
 import json

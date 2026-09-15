@@ -1,18 +1,12 @@
-"""Daily macro targets from a daily calorie target.
+"""Daily macro targets from a calorie target.
 
-This used to be a Random Forest. Its training targets turned out to be a fixed
-multiple of the calorie column (grams per calorie varied by ~0.0001), so the
-model was only rediscovering a formula, and being tree-based it returned
-identical macros for anything above its 2,953 kcal training ceiling. Applying
-the split directly fixes that and removes three pickle files. See the README for
-the numbers.
+This was a Random Forest until its training labels turned out to be a fixed
+multiple of the calorie column, so it was only rediscovering a formula - and it
+could not extrapolate past 2,953 kcal. Applying the split directly fixes that.
 
-The shares below are that dataset's implied split, normalised to sum to 100% —
-it originally totalled 103%, which is itself a sign it was generated.
-
-The split is fixed: it does not vary by sport or goal, because the original data
-contained no information about either. Goal changes the calorie target, and the
-macros scale with it.
+The shares are that dataset's implied split normalised to 100% (it came to 103%,
+which is its own tell). Fixed, so it does not vary by sport or goal - the data
+had nothing to say about either.
 """
 
 PROTEIN_ENERGY_SHARE = 0.236

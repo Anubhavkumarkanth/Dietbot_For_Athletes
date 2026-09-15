@@ -13,37 +13,13 @@ Run it if the data changes or you want to reproduce the models yourself:
     python scripts/train_models.py            # train and save both
     python scripts/train_models.py --rejected # reproduce the rejected designs
 
-WHY THE MODEL PREDICTS CALORIES AND NOT MACROS
-----------------------------------------------
-The original model predicted macro grams. Four designs were evaluated on real
-NHANES data before settling on this one, and three of them failed to beat a
-trivial baseline. `--rejected` reproduces them. In short:
+Four designs were tried; three lost to a trivial baseline, so the model predicts
+calorie intake rather than macro grams. `--rejected` reproduces the failures and
+the README has the numbers.
 
-  macro grams from body + calories   RF R2 0.584  vs  0.585 for calories x a
-                                     fixed ratio. The forest ties a one-line
-                                     formula, so it earns nothing.
-  macro grams from body alone        RF R2 0.043. Beats the mean, but that is
-                                     not predictive power in any useful sense.
-  macro composition (% of energy)    RF R2 -0.057, i.e. worse than predicting
-                                     the training mean for everyone.
-  calorie intake from body           RF R2 0.130 vs 0.071 for Mifflin-St Jeor,
-                                     MAE 633 vs 651 kcal. The only design that
-                                     beats its incumbent on both metrics.
-
-The conclusion is about the relationship, not the dataset: once you know a
-person's calorie intake, their macro grams follow the population ratio closely,
-and body measurements explain almost none of what is left. Macro targets are
-therefore computed directly in src/macro_targets.py, and the RandomForest does
-the one job it measurably does better than the formula it replaces.
-
-HONEST LIMITS OF THE SHIPPED MODEL
-----------------------------------
-R2 of 0.130 is low. A single 24-hour dietary recall is a noisy measurement of a
-person's habitual intake (the test set's own standard deviation is about 855
-kcal), so most of that variance is not predictable from body measurements by
-any model. It predicts what people like you *typically eat*, which is not the
-same thing as what you *should* eat. The app presents it as a reference
-alongside the Mifflin-St Jeor target rather than as a recommendation.
+R2 is only 0.130 - a single day's dietary recall is a noisy stand-in for what
+someone habitually eats, so most of that variance is not predictable from body
+measurements at all. It ships because it still beats Mifflin-St Jeor.
 """
 
 import json

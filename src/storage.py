@@ -1,18 +1,7 @@
-"""PostgreSQL persistence for generated plans.
+"""Saving and loading plans.
 
-Written with psycopg2 and hand-written SQL rather than an ORM. For three tables
-and four queries an ORM would be more machinery than the problem needs, and
-keeping the SQL visible makes what the app actually sends to the database
-obvious.
-
-Saving a plan writes to three tables and is done in a single transaction: a
-profile with no plan, or a plan with no foods, would be a half-saved record that
-the history view could not display. psycopg2 opens a transaction implicitly, so
-the `with connection` block below commits on success and rolls back if any
-statement raises.
-
-Persistence is optional. If DIETBOT_DB_URL is not set the app runs exactly as it
-did before, just without a history - `is_available` is what the UI checks.
+psycopg2 with plain SQL rather than an ORM - three tables and four queries did
+not need one. Optional: without DIETBOT_DB_URL the app just runs without history.
 """
 
 import os
