@@ -6,3 +6,10 @@ joblib>=1.4
 openpyxl>=3.1
 python-dotenv>=1.0
 openai>=1.40
+
+# Optional PostgreSQL persistence. The app runs without a database; when
+# DIETBOT_DB_URL is unset it simply does not offer plan history.
+psycopg2-binary>=2.9
+
+# Tests
+pytest>=8.0

@@ -2,8 +2,8 @@
 
 Nothing in this module touches a model or an API - it's BMI, BMR/TDEE and
 MET-based calorie burn, all standard formulas. Keeping it separate from
-macro_predictor.py and meal_recommender.py makes it obvious which parts of
-the app need the trained models to work and which parts don't.
+meal_recommender.py, which does load a model, makes it obvious which parts
+of the app need a trained model to work and which parts don't.
 """
 
 MET_VALUES = {

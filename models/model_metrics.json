@@ -1,0 +1,42 @@
+{
+  "generated_on": "2026-09-15",
+  "data_source": "NHANES 2017-2018 (US CDC / NCHS, public domain)",
+  "dataset_rows": 4624,
+  "features": [
+    "age_years",
+    "SEX_MALE",
+    "height_cm",
+    "weight_kg",
+    "bmi"
+  ],
+  "target": "energy_kcal",
+  "split": {
+    "train": 2774,
+    "validation": 925,
+    "test": 925
+  },
+  "min_samples_leaf": 150,
+  "test_metrics": {
+    "mean_baseline": {
+      "mae_kcal": 684.4,
+      "r2": -0.0008
+    },
+    "mifflin_st_jeor": {
+      "mae_kcal": 650.6,
+      "r2": 0.0714
+    },
+    "random_forest": {
+      "mae_kcal": 632.9,
+      "r2": 0.1298
+    }
+  },
+  "random_forest_beats_formula_baseline": true,
+  "test_target_std_kcal": 854.7,
+  "feature_importances": {
+    "age_years": 0.2201,
+    "SEX_MALE": 0.6091,
+    "height_cm": 0.1411,
+    "weight_kg": 0.0161,
+    "bmi": 0.0136
+  }
+}
