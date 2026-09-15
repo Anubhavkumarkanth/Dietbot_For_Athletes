@@ -59,7 +59,6 @@ class CaloriePredictor:
 
     @property
     def metrics(self) -> dict | None:
-        """Held-out test metrics recorded at training time, if available."""
         return self._metrics
 
     def predict(
@@ -70,12 +69,7 @@ class CaloriePredictor:
         weight_kg: float,
         bmi: float,
     ) -> float:
-        """Typical daily calorie intake, in kcal, for this profile.
-
-        Raises:
-            RuntimeError: If the model could not be loaded.
-            ValueError: If any measurement is not positive.
-        """
+        """Typical daily calorie intake, in kcal, for this profile."""
         if not self.is_available:
             raise RuntimeError(f"Calorie model unavailable: {self._load_error}")
 

@@ -16,9 +16,6 @@ from src.meal_recommender import MealRecommender
 METRICS_PATH = Path(__file__).resolve().parent.parent / "models" / "model_metrics.json"
 
 
-# ==========================================================================
-# Calorie model (RandomForest trained on NHANES)
-# ==========================================================================
 def test_calorie_model_loads():
     assert CaloriePredictor().is_available
 
@@ -99,9 +96,6 @@ def test_recorded_metrics_show_the_model_beats_the_formula():
     assert metrics["dataset_rows"] > 4000
 
 
-# ==========================================================================
-# Macro targets (direct calculation, not a model)
-# ==========================================================================
 def test_macro_shares_sum_to_one():
     total = PROTEIN_ENERGY_SHARE + CARB_ENERGY_SHARE + FAT_ENERGY_SHARE
     assert total == pytest.approx(1.0, abs=1e-9)
@@ -127,9 +121,6 @@ def test_macro_targets_rejects_non_positive_calories():
         calculate_macro_targets(0)
 
 
-# ==========================================================================
-# Meal recommender (NearestNeighbors over the food table)
-# ==========================================================================
 def test_meal_recommender_loads_and_builds_plans():
     recommender = MealRecommender()
     assert recommender.is_available

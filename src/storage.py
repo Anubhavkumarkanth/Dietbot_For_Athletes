@@ -62,20 +62,10 @@ def _connect():
 
 def save_plan(profile: dict, targets: dict, meals: list[dict],
               predicted_intake_kcal: float | None = None) -> int:
-    """Save a profile, the plan generated from it, and its foods.
+    """Save a profile, the plan built from it, and its foods.
 
     All three inserts share one transaction, so a plan is either stored
-    completely or not at all.
-
-    Args:
-        profile: height_cm, weight_kg, age_years, gender, sport, duration_min,
-            activity_level, goal.
-        targets: daily_calories plus protein_g / carbs_g / fat_g / sugar_g.
-        meals: the chosen foods, each with food_name, protein, fat, carbs.
-        predicted_intake_kcal: the model's estimate, or None if unavailable.
-
-    Returns:
-        The generated plan_id.
+    completely or not at all. Returns the new plan_id.
     """
     with _connect() as connection:
         with connection:  # commits on exit, rolls back on exception

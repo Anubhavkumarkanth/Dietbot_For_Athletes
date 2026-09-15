@@ -15,7 +15,6 @@ contained no information about either. Goal changes the calorie target, and the
 macros scale with it.
 """
 
-# Share of daily energy from each macronutrient. These sum to 1.0.
 PROTEIN_ENERGY_SHARE = 0.236
 CARB_ENERGY_SHARE = 0.516
 FAT_ENERGY_SHARE = 0.248
@@ -24,24 +23,16 @@ FAT_ENERGY_SHARE = 0.248
 # is reported as a suggested ceiling rather than counted toward the 100% above.
 SUGAR_ENERGY_SHARE = 0.107
 
-# Atwater factors: metabolisable energy per gram.
+# Atwater factors.
 KCAL_PER_GRAM_PROTEIN = 4
 KCAL_PER_GRAM_CARB = 4
 KCAL_PER_GRAM_FAT = 9
 
 
 def calculate_macro_targets(daily_calories: float) -> dict:
-    """Convert a daily calorie target into grams of each macronutrient.
+    """Grams of protein, carbs and fat for a daily calorie target.
 
-    Args:
-        daily_calories: Total daily calorie target, as produced by
-            ``calculations.calculate_daily_calorie_target``.
-
-    Returns:
-        Grams per day of protein, carbs, fat, and a suggested sugar ceiling.
-
-    Raises:
-        ValueError: If ``daily_calories`` is not positive.
+    Sugar is reported as a suggested ceiling, not added on top.
     """
     if daily_calories <= 0:
         raise ValueError(f"daily_calories must be positive, got {daily_calories}")
