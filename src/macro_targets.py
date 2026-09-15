@@ -1,47 +1,18 @@
 """Daily macro targets from a daily calorie target.
 
-WHY THIS IS NOT A MODEL ANYMORE
--------------------------------
-This used to load a 900 KB RandomForestRegressor trained on
-``data/macro_targets.xlsx`` (99 usable rows, features: height, weight,
-calories). Inspecting that dataset shows every target is a fixed multiple of
-the calorie column:
+This used to be a Random Forest. Its training targets turned out to be a fixed
+multiple of the calorie column (grams per calorie varied by ~0.0001), so the
+model was only rediscovering a formula, and being tree-based it returned
+identical macros for anything above its 2,953 kcal training ceiling. Applying
+the split directly fixes that and removes three pickle files. See the README for
+the numbers.
 
-    grams per calorie      mean       std        corr with calories
-    protein                0.060974   0.000141   0.999940
-    carbs                  0.133316   0.000134   0.999988
-    fat                    0.028419   0.000125   0.999769
-    sugar                  0.026695   0.000131   0.999720
+The shares below are that dataset's implied split, normalised to sum to 100% —
+it originally totalled 103%, which is itself a sign it was generated.
 
-A standard deviation in the fourth decimal place and a correlation of 0.9999
-mean the labels were generated from a formula, not observed. Height and weight
-carry almost no signal at all once calories are known (|r| < 0.12 against the
-protein ratio), so the forest was learning ``y = k * x`` with two noise inputs.
-
-Keeping it caused a real bug. A RandomForest cannot extrapolate: the training
-data topped out at 2,953 kcal, so every athlete above roughly 2,900 kcal/day
-received byte-identical macros. A 3,000 kcal cyclist and a 6,000 kcal swimmer
-got the same numbers - which is precisely the population this app exists for.
-
-Replacing the model with the split it had memorised fixes that, because a ratio
-scales at any calorie level. It also removes a dependency on three pickle files
-and makes the logic inspectable.
-
-WHERE THESE NUMBERS COME FROM
------------------------------
-The dataset's implied split is 24.4% protein / 53.3% carbohydrate / 25.6% fat
-of daily energy - which totals 103.3%, another sign it was synthetic rather
-than measured. The shares below are those same proportions normalised to sum to
-100%, so the macros now reconcile with the calorie target they came from.
-
-KNOWN LIMITATION
-----------------
-The split is fixed. It does not change with training load or goal, because the
-original dataset contained no information about either - it only ever saw
-height, weight and calories. Goal affects the calorie target (see
-``calculations.calculate_daily_calorie_target``), and the macros scale with it,
-but the ratio between them stays constant. Varying the split by sport or goal
-would need nutrition data this project does not have.
+The split is fixed: it does not vary by sport or goal, because the original data
+contained no information about either. Goal changes the calorie target, and the
+macros scale with it.
 """
 
 # Share of daily energy from each macronutrient. These sum to 1.0.
