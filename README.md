@@ -65,7 +65,8 @@ athletes the app is aimed at.
 ### What replaced it
 
 I switched to NHANES 2017–2018 (4,624 adults, US CDC, public domain) and tested four designs
-against baselines. Three lost:
+against baselines. Three were rejected: two lost to their baseline, and the third beat the training
+mean by 0.037 R², too little to be useful.
 
 | Design | RF R² | Baseline | Kept |
 |---|---|---|---|
@@ -87,6 +88,29 @@ with a 60/20/20 split and `min_samples_leaf` chosen on validation only:
 
 Macro targets are now a direct calculation, because nothing beat the ratio there.
 
+### How much better is it, really?
+
+The training mean and Mifflin-St Jeor are not fitted to this data, so beating them does not show that
+a forest is needed. `scripts/evaluate_baselines.py` adds a linear regression fitted on the same five
+features, and a bootstrap over the 925 test rows:
+
+| Model | MAE (kcal) | R² |
+|---|---|---|
+| mean baseline | 684.4 | −0.001 |
+| Mifflin-St Jeor | 650.6 | 0.071 |
+| Linear regression (fitted) | 632.1 | 0.134 |
+| **Random Forest** | **632.9** | **0.130** |
+
+- The forest's MAE is 17.7 kcal (2.7%) below the formula's. A 95% bootstrap interval for that
+  difference runs from −36.9 to +0.8 kcal, so it only just includes zero: modestly better, not clearly
+  better.
+- A linear regression does as well as the forest (632.1 against 632.9; the interval for the difference
+  is −3.6 to +5.2 kcal). Most of the gain over the formula comes from fitting to this data, not from
+  the forest's flexibility, and a forest is not required to get it.
+
+`tests/test_reproducibility.py` recomputes the forest's test metrics from the committed CSV and model,
+so the table above cannot drift from what is in the repository.
+
 ### Limitations
 
 - **R² of 0.130 is low.** A single 24-hour dietary recall is a noisy measure of habitual intake
@@ -94,7 +118,12 @@ Macro targets are now a direct calculation, because nothing beat the ratio there
   body measurements by any model. The honest claim is narrow: modestly better than the standard
   formula at this task.
 - It predicts **typical intake, not requirement**, and self-reported intake is known to be
-  under-reported. It reads lower than the formula target.
+  under-reported. It reads lower than the formula target. For the same reason the comparison with
+  Mifflin-St Jeor is not like for like: the formula estimates what a person needs, and the target is
+  what people reported eating.
+- NHANES is a weighted survey sample. The analysis here is unweighted, so it describes the 4,624
+  people in the file, not the US adult population.
+- Records outside 800–5,000 kcal were dropped as implausible, so the model only sees that range.
 - **Not medical advice.** No clinical claim is made.
 - The macro split is fixed and does not vary by sport or goal — the data did not support varying it.
 - The food table has 145 items, mostly South Asian dishes, so coverage is narrow.
@@ -129,9 +158,11 @@ OpenAI API (optional)
 
 ## Setup
 
+Tested on Python 3.12. The CI workflow is set to Python 3.11 and has not run yet.
+
 ```bash
-git clone https://github.com/Anubhavkumarkanth/Dietbot-An-AI-Powered-Diet-Plans-for-Atheletes.git
-cd Dietbot-An-AI-Powered-Diet-Plans-for-Atheletes
+git clone https://github.com/Anubhavkumarkanth/Dietbot_For_Athletes.git
+cd Dietbot_For_Athletes
 pip install -r requirements.txt
 ```
 
@@ -146,6 +177,10 @@ cp .env.example .env
 | `OPENAI_API_KEY` | A templated plan summary is shown instead of a generated one |
 | `DIETBOT_DB_URL` | Plans are not saved and no history is shown |
 
+If `OPENAI_API_KEY` is set, the profile details behind a plan (age, sex, sport, training duration,
+goal) and its macro targets are sent to the OpenAI API to write the summary. Leave it unset to keep
+everything on your machine.
+
 For persistence, create the database and load the schema:
 
 ```bash
@@ -153,6 +188,9 @@ psql -U postgres -c "CREATE ROLE dietbot_app LOGIN PASSWORD '<YOUR_PASSWORD>';"
 psql -U postgres -c "CREATE DATABASE dietbot OWNER dietbot_app;"
 psql -U dietbot_app -d dietbot -f sql/schema.sql
 ```
+
+`schema.sql` is safe to run again; it never drops anything. To delete all saved plans and start
+over, run `sql/reset.sql` instead.
 
 Then in `.env`:
 
@@ -178,6 +216,13 @@ python scripts/train_models.py
 python scripts/train_models.py --rejected
 ```
 
+To compare the committed model with simpler baselines and put an interval on the difference (reads
+the committed files, writes nothing):
+
+```bash
+python scripts/evaluate_baselines.py
+```
+
 ---
 
 ## Tests
@@ -186,14 +231,31 @@ python scripts/train_models.py --rejected
 python -m pytest
 ```
 
-24 tests. The five persistence tests skip automatically when `DIETBOT_DB_URL` is unset, so the
-suite passes without a database.
+36 tests. The five persistence tests are skipped unless `DIETBOT_TEST_DB_URL` is set, so the suite
+passes without a database.
+
+They write and delete rows, so they only run against a database whose name ends in `_test`
+(`tests/conftest.py` stops the run for anything else), and the app's own `DIETBOT_DB_URL` is removed
+from the environment while tests run:
+
+```bash
+psql -U postgres -c "CREATE DATABASE dietbot_test OWNER dietbot_app;"
+psql -U dietbot_app -d dietbot_test -f sql/schema.sql
+export DIETBOT_TEST_DB_URL=postgresql://dietbot_app:<YOUR_PASSWORD>@localhost:5432/dietbot_test
+python -m pytest
+```
 
 They cover model loading, prediction type and range, that predictions respond to their inputs, a
-regression test against the old model's flatline failure, invalid input handling, that the recorded
-metrics still beat the formula baseline, macro targets reconciling with their calorie target, meal
-plan construction, and — with a database — transactional saves, cascade deletes, and that a
-constraint violation rolls the whole save back.
+regression test against the old model's flatline failure, invalid input handling, macro targets
+reconciling with their calorie target, meal plan construction, and — with a database — transactional
+saves, cascade deletes, and that a constraint violation rolls the whole save back.
+
+`test_reproducibility.py` recomputes the published test metrics from the committed data and model, and
+checks the dataset's shape and consistency. `test_app.py` runs the Streamlit page headless and checks
+that pressing the button produces targets and three meal plans.
+
+Lint: `ruff check .`. CI (`.github/workflows/ci.yml`) runs the lint and the full suite against a
+PostgreSQL service.
 
 ---
 
@@ -202,7 +264,11 @@ constraint violation rolls the whole save back.
 ```
 dietbot/
 ├── app.py                    Streamlit UI
-├── sql/schema.sql            profiles → plans → plan_items
+├── sql/
+│   ├── schema.sql            profiles → plans → plan_items (safe to re-run)
+│   └── reset.sql             deletes all saved data, then recreates the schema
+├── .github/workflows/        CI: lint and tests with PostgreSQL
+├── ruff.toml                 lint settings
 ├── data/
 │   ├── food_data.csv         145 foods with nutrient breakdowns
 │   ├── nhanes_intake.csv     built by scripts/build_dataset.py
@@ -220,6 +286,7 @@ dietbot/
 │   └── ai_explainer.py       optional summary, with fallback
 ├── scripts/
 │   ├── build_dataset.py
-│   └── train_models.py
-└── tests/
+│   ├── train_models.py
+│   └── evaluate_baselines.py  committed model vs simpler baselines, with a bootstrap interval
+└── tests/                    unit, persistence, reproducibility and Streamlit smoke tests
 ```
