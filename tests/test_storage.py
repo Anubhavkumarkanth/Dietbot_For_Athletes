@@ -1,9 +1,11 @@
 """Tests for the PostgreSQL persistence layer.
 
-These need a live database. When DIETBOT_DB_URL is unset or unreachable they
-skip rather than fail, because persistence is an optional feature - the app runs
-without it, and so should the rest of the suite. Run them by setting
-DIETBOT_DB_URL and applying sql/schema.sql first.
+These need a live database. When DIETBOT_TEST_DB_URL is unset or unreachable
+they skip rather than fail, because persistence is an optional feature - the app
+runs without it, and so should the rest of the suite. Run them by creating a
+database whose name ends in _test, applying sql/schema.sql to it, and setting
+DIETBOT_TEST_DB_URL (see tests/conftest.py for why it must be a separate
+database).
 """
 
 import pytest
@@ -12,7 +14,7 @@ from src import storage
 
 pytestmark = pytest.mark.skipif(
     not storage.is_available(),
-    reason="DIETBOT_DB_URL is not set or the database is unreachable",
+    reason="DIETBOT_TEST_DB_URL is not set or the database is unreachable",
 )
 
 

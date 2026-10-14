@@ -3,14 +3,15 @@
 --
 --  Run with:  psql -U dietbot_app -d dietbot -f sql/schema.sql
 --
+--  Safe to run more than once: every statement is IF NOT EXISTS, so running it
+--  again leaves existing tables and saved plans alone. (It used to drop the
+--  tables first, which meant repeating the setup step deleted every saved plan.)
+--  To wipe everything and start over, run sql/reset.sql instead.
+--
 --  Three tables. The app previously saved nothing at all, so a user could not
 --  look back at a plan they had generated. This stores the profile a plan was
 --  built from, the plan itself, and the foods in it.
 -- ============================================================================
-
-DROP TABLE IF EXISTS plan_items CASCADE;
-DROP TABLE IF EXISTS plans      CASCADE;
-DROP TABLE IF EXISTS profiles   CASCADE;
 
 
 -- ----------------------------------------------------------------------------
@@ -19,7 +20,7 @@ DROP TABLE IF EXISTS profiles   CASCADE;
 -- same profile can be reused across several plans, and so a saved plan can be
 -- explained later ("what did I enter to get this?").
 -- ----------------------------------------------------------------------------
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     profile_id     SERIAL PRIMARY KEY,
     height_cm      NUMERIC(5, 1) NOT NULL CHECK (height_cm  BETWEEN 100 AND 250),
     weight_kg      NUMERIC(5, 1) NOT NULL CHECK (weight_kg  BETWEEN 30  AND 300),
@@ -43,7 +44,7 @@ CREATE TABLE profiles (
 -- It is nullable because the model is optional: the app still works if the
 -- model artifact is missing.
 -- ----------------------------------------------------------------------------
-CREATE TABLE plans (
+CREATE TABLE IF NOT EXISTS plans (
     plan_id               SERIAL PRIMARY KEY,
     profile_id            INT NOT NULL REFERENCES profiles (profile_id) ON DELETE CASCADE,
     daily_calories        INT NOT NULL CHECK (daily_calories > 0),
@@ -70,7 +71,7 @@ CREATE TABLE plans (
 -- position preserves the order the foods were chosen in, which is lost if rows
 -- are read back without an ORDER BY.
 -- ----------------------------------------------------------------------------
-CREATE TABLE plan_items (
+CREATE TABLE IF NOT EXISTS plan_items (
     plan_item_id SERIAL PRIMARY KEY,
     plan_id      INT  NOT NULL REFERENCES plans (plan_id) ON DELETE CASCADE,
     food_name    TEXT NOT NULL,
@@ -84,5 +85,5 @@ CREATE TABLE plan_items (
 
 -- Plans are always read back newest-first for a given profile, and the history
 -- view lists the most recent plans overall.
-CREATE INDEX idx_plans_created_at ON plans (created_at DESC);
-CREATE INDEX idx_plans_profile    ON plans (profile_id);
+CREATE INDEX IF NOT EXISTS idx_plans_created_at ON plans (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_plans_profile    ON plans (profile_id);
