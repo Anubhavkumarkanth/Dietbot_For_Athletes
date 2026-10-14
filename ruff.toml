@@ -1,0 +1,11 @@
+line-length = 120
+
+[lint]
+# Unused imports and undefined names (F), plus basic style (E, W). Kept small on
+# purpose: the aim is to catch real mistakes, not to restyle working code.
+select = ["E", "F", "W"]
+
+[lint.per-file-ignores]
+# app.py imports after load_dotenv() on purpose: src/ai_explainer.py reads
+# OPENAI_API_KEY at import time, so .env has to be loaded first.
+"app.py" = ["E402"]
