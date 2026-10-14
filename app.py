@@ -22,8 +22,20 @@ from src import storage
 
 st.set_page_config(page_title="DietBot - Athlete Diet Recommendations", page_icon="🥗", layout="wide")
 
-calorie_predictor = CaloriePredictor()
-meal_recommender = MealRecommender()
+# Streamlit re-runs this whole script on every widget interaction. Without the
+# cache, each click re-read the model pickle and the food table from disk.
+@st.cache_resource
+def load_calorie_predictor() -> CaloriePredictor:
+    return CaloriePredictor()
+
+
+@st.cache_resource
+def load_meal_recommender() -> MealRecommender:
+    return MealRecommender()
+
+
+calorie_predictor = load_calorie_predictor()
+meal_recommender = load_meal_recommender()
 
 st.sidebar.title("Your Details")
 height = st.sidebar.number_input("Height (cm)", min_value=100, max_value=250, value=170)
