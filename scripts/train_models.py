@@ -13,13 +13,16 @@ Run it if the data changes or you want to reproduce the models yourself:
     python scripts/train_models.py            # train and save both
     python scripts/train_models.py --rejected # reproduce the rejected designs
 
-Four designs were tried; three lost to a trivial baseline, so the model predicts
-calorie intake rather than macro grams. `--rejected` reproduces the failures and
-the README has the numbers.
+Four designs were tried. Two lost to their baseline outright, and a third beat
+the training mean by too little to be useful (R2 0.033 against -0.004), so the
+model predicts calorie intake rather than macro grams. `--rejected` reproduces
+all three and the README has the numbers.
 
 R2 is only 0.130 - a single day's dietary recall is a noisy stand-in for what
 someone habitually eats, so most of that variance is not predictable from body
-measurements at all. It ships because it still beats Mifflin-St Jeor.
+measurements at all. It ships because it beats Mifflin-St Jeor, by a small
+margin: scripts/evaluate_baselines.py shows how small, and that a fitted linear
+regression does as well.
 """
 
 import json
