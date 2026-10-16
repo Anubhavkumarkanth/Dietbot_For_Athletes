@@ -125,10 +125,19 @@ so the table above cannot drift from what is in the repository.
   people in the file, not the US adult population.
 - Records outside 800–5,000 kcal were dropped as implausible, so the model only sees that range.
 - **Not medical advice.** No clinical claim is made.
+- **Very low calorie targets.** The formula can return a target that is unsafe to follow, for
+  example 792 kcal for a 150 cm, 45 kg, 30-year-old woman on a weight-loss goal. A target below
+  1,200 kcal (women) or 1,500 kcal (men) shows a warning, using the minimums Harvard Health cites for
+  dieting without a health professional's supervision; the number itself is not changed. A target of
+  zero or less (possible only for the smallest and oldest inputs the form accepts) is refused with a
+  message instead of a plan.
 - The macro split is fixed and does not vary by sport or goal — the data did not support varying it.
-- The food table has 145 items, mostly South Asian dishes, so coverage is narrow.
-- Meal plans use a greedy nearest-neighbour search, so they approach the macro targets rather than
-  hitting them exactly.
+- The food table has 145 items, mostly South Asian dishes, so coverage is narrow. Its values are per
+  100 g of each food (checked: no row exceeds 100 g of macros, and energy matches 4/4/9 kcal per
+  gram of protein/carbs/fat for 98.6% of rows).
+- Meal plans use a greedy nearest-neighbour search over those per-100 g values: up to five foods at
+  100 g each, with no portion sizes. They approach the macro targets rather than hitting them
+  exactly, and only the first of the three plans is saved to the history.
 
 ---
 

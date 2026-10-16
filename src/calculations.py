@@ -54,6 +54,11 @@ BMI_CATEGORIES = [
     (30.0, "Overweight"),
 ]
 
+# Daily calorie targets below these are generally advised against without a health professional's supervision
+# (Harvard Health, "Calorie counting made easy": not below 1,200 a day for women or 1,500 for men). A warning only:
+# the formula's result is never changed.
+LOW_CALORIE_WARNING_KCAL = {"Female": 1200, "Male": 1500}
+
 
 def calculate_bmi(height_cm: float, weight_kg: float) -> float:
     height_m = height_cm / 100
@@ -99,3 +104,18 @@ def calculate_daily_calorie_target(
     tdee = bmr * ACTIVITY_MULTIPLIERS.get(activity_level, 1.375)
     adjustment = GOAL_CALORIE_ADJUSTMENT.get(goal, 0)
     return round(tdee + adjustment)
+
+
+def low_calorie_warning(daily_calories: float, gender: str) -> str | None:
+    """A caution for a calorie target below the commonly advised minimum, or None.
+
+    The target itself is left alone: it is what the formula gives for these inputs. The caution tells the person
+    how to read it. An unrecognised gender gets the lower of the two minimums.
+    """
+    minimum = LOW_CALORIE_WARNING_KCAL.get(gender, min(LOW_CALORIE_WARNING_KCAL.values()))
+    if daily_calories >= minimum:
+        return None
+    return (
+        f"This target is below {minimum:,} kcal a day, which is generally advised against without a health "
+        "professional's supervision. Treat it as the formula's result for these inputs, not as advice."
+    )
