@@ -4,6 +4,7 @@ from src.calculations import (
     calculate_bmr,
     calculate_daily_calorie_target,
     calculate_workout_calories,
+    low_calorie_warning,
 )
 
 
@@ -41,3 +42,28 @@ def test_daily_calorie_target_reflects_goal():
     gain = calculate_daily_calorie_target(180, 80, 25, "Male", "Sedentary", "Weight Gain")
     assert gain > loss
     assert gain - loss == 1000  # -500 vs +500 adjustment
+
+
+def test_low_calorie_warning_starts_below_the_commonly_advised_minimums():
+    assert low_calorie_warning(1199, "Female") is not None
+    assert low_calorie_warning(1200, "Female") is None
+    assert low_calorie_warning(1499, "Male") is not None
+    assert low_calorie_warning(1500, "Male") is None
+
+
+def test_low_calorie_warning_names_the_minimum_that_applies():
+    assert "1,200" in low_calorie_warning(800, "Female")
+    assert "1,500" in low_calorie_warning(800, "Male")
+
+
+def test_an_unrecognised_gender_gets_the_lower_minimum():
+    assert low_calorie_warning(1199, "Other") is not None
+    assert low_calorie_warning(1300, "Other") is None
+
+
+def test_the_warning_does_not_change_the_target():
+    # A 150 cm, 45 kg, 30-year-old woman on a weight-loss goal: the formula gives 792 kcal and still does.
+    target = calculate_daily_calorie_target(150, 45, 30, "Female", "Sedentary", "Weight Loss")
+    assert target == 792
+    assert low_calorie_warning(target, "Female") is not None
+    assert calculate_daily_calorie_target(150, 45, 30, "Female", "Sedentary", "Weight Loss") == 792

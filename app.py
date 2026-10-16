@@ -14,6 +14,7 @@ from src.calculations import (
     calculate_bmi,
     calculate_daily_calorie_target,
     calculate_workout_calories,
+    low_calorie_warning,
 )
 from src.calorie_predictor import CaloriePredictor
 from src.macro_targets import calculate_macro_targets
@@ -22,8 +23,20 @@ from src import storage
 
 st.set_page_config(page_title="DietBot - Athlete Diet Recommendations", page_icon="🥗", layout="wide")
 
-calorie_predictor = CaloriePredictor()
-meal_recommender = MealRecommender()
+# Streamlit re-runs this whole script on every widget interaction. Without the
+# cache, each click re-read the model pickle and the food table from disk.
+@st.cache_resource
+def load_calorie_predictor() -> CaloriePredictor:
+    return CaloriePredictor()
+
+
+@st.cache_resource
+def load_meal_recommender() -> MealRecommender:
+    return MealRecommender()
+
+
+calorie_predictor = load_calorie_predictor()
+meal_recommender = load_meal_recommender()
 
 st.sidebar.title("Your Details")
 height = st.sidebar.number_input("Height (cm)", min_value=100, max_value=250, value=170)
@@ -42,6 +55,15 @@ if st.sidebar.button("Get recommendations", type="primary"):
     bmi = calculate_bmi(height, weight)
     workout_calories = calculate_workout_calories(weight, duration, sport)
     daily_calories = calculate_daily_calorie_target(height, weight, age, gender, activity_level, goal)
+
+    if daily_calories <= 0:
+        # Reachable with the smallest and oldest inputs the form accepts, for example a 100 cm, 30 kg, 70-year-old
+        # woman on a weight-loss goal. Turning it into macros raised an unhandled ValueError and showed a stack trace.
+        st.error(
+            f"These details give a daily calorie target of {daily_calories} kcal, which cannot be turned into a plan. "
+            "Check the height, weight and age you entered."
+        )
+        st.stop()
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("BMI", f"{bmi} ({bmi_category(bmi)})")
@@ -74,6 +96,10 @@ if st.sidebar.button("Get recommendations", type="primary"):
                 "target, not this figure."
             )
 
+    caution = low_calorie_warning(daily_calories, gender)
+    if caution:
+        st.warning(caution)
+
     # A direct calculation from the calorie target - see src/macro_targets.py
     # for why this replaced a trained model.
     macro_targets = calculate_macro_targets(daily_calories)
@@ -83,9 +109,14 @@ if st.sidebar.button("Get recommendations", type="primary"):
     m1.metric("Protein", f"{macro_targets['protein_g']} g")
     m2.metric("Carbs", f"{macro_targets['carbs_g']} g")
     m3.metric("Fat", f"{macro_targets['fat_g']} g")
-    m4.metric("Sugar", f"{macro_targets['sugar_g']} g")
+    m4.metric("Sugar (max)", f"{macro_targets['sugar_g']} g")
+    st.caption("Sugar is part of the carbohydrate total and is shown as a suggested maximum, not as an extra target.")
 
     st.subheader("🍽 Recommended meal plans")
+    st.caption(
+        "Food values are per 100 g, as in the food table. Each plan lists up to five foods chosen to come close to "
+        "your daily macro targets at 100 g each, so the totals approach the targets but do not match them exactly."
+    )
 
     if not meal_recommender.is_available:
         st.warning("Meal recommendations are unavailable — food data or the matching model failed to load.")
@@ -119,7 +150,7 @@ if st.sidebar.button("Get recommendations", type="primary"):
                 meals=plans[0]["meals"],
                 predicted_intake_kcal=typical_intake,
             )
-            st.caption(f"Saved as plan #{saved_plan_id}.")
+            st.caption(f"Meal plan 1 saved as plan #{saved_plan_id}.")
         except Exception as exc:
             # Saving is a convenience; failing to save must not lose the plan
             # the user is looking at.
