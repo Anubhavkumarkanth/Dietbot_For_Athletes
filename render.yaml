@@ -1,0 +1,13 @@
+# Render Blueprint: the Streamlit app on Render's free plan.
+# No database or API key is needed; without them the app skips plan history
+# and shows a templated plan summary.
+services:
+  - type: web
+    name: dietbot-for-athletes
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
