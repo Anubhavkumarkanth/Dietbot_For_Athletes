@@ -4,6 +4,8 @@ A Streamlit app that turns a person's profile — height, weight, age, sex, spor
 and goal — into a daily calorie target, macro targets, and a meal plan built from a nutrition
 dataset. Plans can optionally be saved to PostgreSQL and read back later.
 
+**Live demo:** https://dietbot-for-athletes.onrender.com (free hosting, so the first load after a quiet spell can take up to a minute).
+
 ---
 
 ## Features
